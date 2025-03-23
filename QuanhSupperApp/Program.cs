@@ -1,6 +1,7 @@
 using Application.Interface;
 using Application.Services;
 using Domain.Interfaces;
+using Infrastructure.Authentication;
 using Infrastructure.Persistence.Context;
 using Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,8 @@ namespace QuanhSupperApp
 
             var app = builder.Build();
 
+            app.UseMiddleware<JwtMiddleware>();
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -37,8 +40,8 @@ namespace QuanhSupperApp
 
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
             app.UseAuthorization();
-
 
             app.MapControllers();
 
