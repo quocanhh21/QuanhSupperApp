@@ -3,15 +3,22 @@ using Application.DTOs.Responses;
 using Application.Interface;
 using Domain.Entities;
 using Domain.Interfaces;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace Application.Services
 {
     public class AuthService : IAuthService
     {
+        private readonly IConfiguration _configuration;
         private readonly IAuthRepository _authRepository;
 
-        public AuthService(IAuthRepository authRepository)
+        public AuthService(IConfiguration configuration, IAuthRepository authRepository)
         {
+            _configuration = configuration;
             _authRepository = authRepository;
         }
 
@@ -20,7 +27,7 @@ namespace Application.Services
             var user = await _authRepository.GetUserByEmailAsync(request.Email);
             if (user == null || !VerifyPassword(user, request.Password))
             {
-                throw new UnauthorizedAccessException("Invalid credentials");
+                return null; // Unauthorized
             }
 
             var token = GenerateJwtToken(user);
@@ -49,6 +56,8 @@ namespace Application.Services
             return new AuthResponse { Token = token, User = newUser };
         }
 
+        #region Private methods
+
         private string HashPassword(string password)
         {
             return BCrypt.Net.BCrypt.HashPassword(password);
@@ -61,7 +70,29 @@ namespace Application.Services
 
         private string GenerateJwtToken(User user)
         {
-            return "MockJWTToken"; // Replace with real JWT logic
+            var jwtSettings = _configuration.GetSection("JwtSettings");
+            var key = Encoding.UTF8.GetBytes(jwtSettings["Secret"]);
+
+            var claims = new List<Claim>
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+            var token = new JwtSecurityToken(
+                issuer: jwtSettings["Issuer"],
+                audience: jwtSettings["Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(Convert.ToInt32(jwtSettings["ExpiryMinutes"])),
+                signingCredentials: new SigningCredentials(
+                    new SymmetricSecurityKey(key),
+                    SecurityAlgorithms.HmacSha256)
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        #endregion Private methods
     }
 }
