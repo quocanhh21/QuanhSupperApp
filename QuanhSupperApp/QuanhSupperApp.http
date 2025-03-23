@@ -1,0 +1,6 @@
+@QuanhSupperApp_HostAddress = http://localhost:5177
+
+GET {{QuanhSupperApp_HostAddress}}/auth/
+Accept: application/json
+
+###
