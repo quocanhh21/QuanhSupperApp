@@ -1,12 +1,11 @@
 trigger:
-  - develop  # Runs when code is pushed to the develop branch
+  - develop  # Runs when code is pushed to the main branch
 
-# Change to a stable Ubuntu version
 pool:
-  vmImage: 'ubuntu-22.04'  # Terraform is available on this version
+  vmImage: 'ubuntu-latest'
 
 variables:
-  AZURE_SERVICE_CONNECTION: 'AzureTerraformService'  # Azure DevOps Service Connection
+  AZURE_SERVICE_CONNECTION: 'AzureTerraformService'  # Name of your Azure DevOps Service Connection
   TF_WORKING_DIR: 'infra/terraform'  # Path to Terraform files
 
 stages:
@@ -18,46 +17,22 @@ stages:
         steps:
           - checkout: self
 
-          # Manually install Terraform (if using ubuntu-24.04)
-          - script: |
-              sudo apt-get update
-              sudo apt-get install -y wget unzip
-              wget https://releases.hashicorp.com/terraform/1.7.5/terraform_1.7.5_linux_amd64.zip
-              unzip terraform_1.7.5_linux_amd64.zip
-              sudo mv terraform /usr/local/bin/
-              terraform -version
-            displayName: 'Manually Install Terraform (if missing)'
-
-          # Install Terraform (Preferred)
           - task: TerraformTaskV1@1
             displayName: 'Install Terraform'
             inputs:
-              terraformVersion: '1.7.5'  # Update this to your required Terraform version
+              command: 'version'
 
-          # Check Terraform Formatting
           - script: |
-              terraform fmt -check
-            workingDirectory: $(TF_WORKING_DIR)
-            displayName: 'Check Terraform Formatting'
-
-          # Initialize Terraform
-          - script: |
-              if [ -f "backend-config.tfvars" ]; then 
-                terraform init -backend-config="backend-config.tfvars" -input=false
-              else
-                terraform init -input=false
-              fi
+              terraform init -input=false
               terraform validate
             workingDirectory: $(TF_WORKING_DIR)
             displayName: 'Terraform Init & Validate'
 
-          # Terraform Plan
           - script: |
               terraform plan -out=tfplan
             workingDirectory: $(TF_WORKING_DIR)
             displayName: 'Terraform Plan'
 
-          # Terraform Apply
           - script: |
               terraform apply -auto-approve tfplan
             workingDirectory: $(TF_WORKING_DIR)
