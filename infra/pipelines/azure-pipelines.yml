@@ -31,6 +31,7 @@ jobs:
           backendAzureRmContainerName: $(containerName)
           backendAzureRmKey: $(accessKey)
           command: 'init'
+          commandOptions: '-reconfigure'
           workingDirectory: $(TF_WORKING_DIR)
           
       - task: TerraformTaskV4@4
@@ -62,7 +63,6 @@ jobs:
           provider: 'azurerm'
           command: 'plan'
           environmentServiceNameAzureRM: $(AZURE_SERVICE_CONNECTION)
-          commandOptions: '-migrate-state'
           workingDirectory: $(TF_WORKING_DIR)
   
   # - job: waitForValidation
