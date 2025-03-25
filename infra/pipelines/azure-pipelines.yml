@@ -1,8 +1,8 @@
 trigger:
-  - develop  # Runs when code is pushed to the main branch
+  - develop  # Runs when code is pushed to the develop branch
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'ubuntu-22.04'
 
 variables:
   AZURE_SERVICE_CONNECTION: 'AzureTerraformService'  # Name of your Azure DevOps Service Connection
@@ -17,22 +17,36 @@ stages:
         steps:
           - checkout: self
 
+          # Authenticate with Azure using the Service Connection
+          - task: AzureCLI@2
+            displayName: 'Azure Login'
+            inputs:
+              azureSubscription: $(AZURE_SERVICE_CONNECTION)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az account show
+
+          # Install Terraform
           - task: TerraformInstaller@0
             displayName: 'Install Terraform'
             inputs:
-              command: 'version'
+              terraformVersion: '1.7.5'  # Specify your Terraform version
 
+          # Initialize and Validate Terraform
           - script: |
               terraform init -input=false
               terraform validate
             workingDirectory: $(TF_WORKING_DIR)
             displayName: 'Terraform Init & Validate'
 
+          # Terraform Plan
           - script: |
               terraform plan -out=tfplan
             workingDirectory: $(TF_WORKING_DIR)
             displayName: 'Terraform Plan'
 
+          # Terraform Apply
           - script: |
               terraform apply -auto-approve tfplan
             workingDirectory: $(TF_WORKING_DIR)
