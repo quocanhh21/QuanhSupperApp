@@ -62,6 +62,7 @@ jobs:
           provider: 'azurerm'
           command: 'plan'
           environmentServiceNameAzureRM: $(AZURE_SERVICE_CONNECTION)
+          commandOptions: '-migrate-state'
           workingDirectory: $(TF_WORKING_DIR)
   
   # - job: waitForValidation
