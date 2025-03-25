@@ -1,0 +1,39 @@
+trigger:
+  - develop  # Runs when code is pushed to the main branch
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  AZURE_SERVICE_CONNECTION: 'AzureTerraformService'  # Name of your Azure DevOps Service Connection
+  TF_WORKING_DIR: 'infra/terraform'  # Path to Terraform files
+
+stages:
+  - stage: Terraform
+    displayName: 'Terraform Deployment'
+    jobs:
+      - job: Terraform_Apply
+        displayName: 'Terraform Init & Apply'
+        steps:
+          - checkout: self
+
+          - task: TerraformTaskV1@1
+            displayName: 'Install Terraform'
+            inputs:
+              command: 'version'
+
+          - script: |
+              terraform init -input=false
+              terraform validate
+            workingDirectory: $(TF_WORKING_DIR)
+            displayName: 'Terraform Init & Validate'
+
+          - script: |
+              terraform plan -out=tfplan
+            workingDirectory: $(TF_WORKING_DIR)
+            displayName: 'Terraform Plan'
+
+          - script: |
+              terraform apply -auto-approve tfplan
+            workingDirectory: $(TF_WORKING_DIR)
+            displayName: 'Terraform Apply'
