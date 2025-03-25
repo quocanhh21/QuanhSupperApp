@@ -17,7 +17,7 @@ stages:
         steps:
           - checkout: self
 
-          - task: TerraformTaskV1@1
+          - task: TerraformInstaller@0
             displayName: 'Install Terraform'
             inputs:
               command: 'version'
