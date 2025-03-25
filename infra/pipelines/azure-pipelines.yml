@@ -1,12 +1,13 @@
 trigger:
   - develop  # Runs when code is pushed to the develop branch
 
+# Change to a stable Ubuntu version
 pool:
-  vmImage: 'ubuntu-latest'  # Microsoft-hosted agent
+  vmImage: 'ubuntu-22.04'  # Terraform is available on this version
 
 variables:
   AZURE_SERVICE_CONNECTION: 'AzureTerraformService'  # Azure DevOps Service Connection
-  TF_WORKING_DIR: 'terraform'  # Adjusted based on your file structure
+  TF_WORKING_DIR: 'infra/terraform'  # Path to Terraform files
 
 stages:
   - stage: Terraform
@@ -17,33 +18,47 @@ stages:
         steps:
           - checkout: self
 
-          # Install Terraform (since ubuntu-latest might not have it)
+          # Manually install Terraform (if using ubuntu-24.04)
+          - script: |
+              sudo apt-get update
+              sudo apt-get install -y wget unzip
+              wget https://releases.hashicorp.com/terraform/1.7.5/terraform_1.7.5_linux_amd64.zip
+              unzip terraform_1.7.5_linux_amd64.zip
+              sudo mv terraform /usr/local/bin/
+              terraform -version
+            displayName: 'Manually Install Terraform (if missing)'
+
+          # Install Terraform (Preferred)
           - task: TerraformToolInstaller@1
             displayName: 'Install Terraform'
             inputs:
-              terraformVersion: '1.7.5'
+              terraformVersion: '1.7.5'  # Update this to your required Terraform version
 
-          # Validate Terraform Formatting
+          # Check Terraform Formatting
           - script: |
               terraform fmt -check
             workingDirectory: $(TF_WORKING_DIR)
             displayName: 'Check Terraform Formatting'
 
-          # Terraform Init (Using backend.tf instead of backend-config.tfvars)
+          # Initialize Terraform
           - script: |
-              terraform init -input=false
+              if [ -f "backend-config.tfvars" ]; then 
+                terraform init -backend-config="backend-config.tfvars" -input=false
+              else
+                terraform init -input=false
+              fi
               terraform validate
             workingDirectory: $(TF_WORKING_DIR)
             displayName: 'Terraform Init & Validate'
 
-          # Terraform Plan (With Error Handling)
+          # Terraform Plan
           - script: |
-              terraform plan -out=tfplan || exit 1
+              terraform plan -out=tfplan
             workingDirectory: $(TF_WORKING_DIR)
             displayName: 'Terraform Plan'
 
-          # Terraform Apply (With Confirmation)
+          # Terraform Apply
           - script: |
-              terraform apply -auto-approve tfplan || exit 1
+              terraform apply -auto-approve tfplan
             workingDirectory: $(TF_WORKING_DIR)
             displayName: 'Terraform Apply'
