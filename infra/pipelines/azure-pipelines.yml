@@ -33,15 +33,15 @@ jobs:
           command: 'init'
           workingDirectory: $(TF_WORKING_DIR)
           
-       - task: TerraformTaskV4@4
-         displayName: 'Terraform Validate'
-         inputs:
-          provider: 'azurerm'
-          command: 'validate'
-          workingDirectory: $(TF_WORKING_DIR)
+      - task: TerraformTaskV4@4
+        displayName: 'Terraform Validate'
+        inputs:
+         provider: 'azurerm'
+         command: 'validate'
+         workingDirectory: $(TF_WORKING_DIR)
 
-       - task: PublishPipelineArtifact@1
-         displayName: 'Publish Terraform State'
-         inputs:
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish Terraform State'
+        inputs:
           targetPath: $(TF_WORKING_DIR)
           artifactName: 'terraform-state'
