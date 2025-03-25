@@ -45,3 +45,58 @@ jobs:
         inputs:
           targetPath: $(TF_WORKING_DIR)
           artifactName: 'terraform-state'
+  
+  - job: TerraformPlan
+    displayName: 'Terraform Plan'
+    dependsOn: TerraformInit
+    steps:
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download Terraform State'
+        inputs:
+          artifactName: 'terraform-state'
+          downloadPath: $(TF_WORKING_DIR)
+
+      - task: TerraformTaskV4@4
+        displayName: 'Terraform Plan'
+        inputs:
+          provider: 'azurerm'
+          command: 'plan'
+          environmentServiceNameAzureRM: $(AZURE_SERVICE_CONNECTION)
+          workingDirectory: $(TF_WORKING_DIR)
+  
+  # - job: waitForValidation
+  #   displayName: 'Wait for External Validation'
+  #   pool: server
+  #   timeoutInMinutes: 4320  # 3 days timeout
+  #   dependsOn: TerraformPlan
+  #   steps:
+  #     - task: ManualValidation@0
+  #       timeoutInMinutes: 1440  # 1 day timeout
+  #       inputs:
+  #         notifyUsers: $(approvalEmail)
+  #         instructions: 'Please validate the Terraform Plan before applying'
+  #         onTimeout: 'resume'
+
+  - deployment: TerraformApply
+    displayName: 'Terraform Apply'
+    #environment: production  # Change based on your environment
+    #dependsOn: waitForValidation
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - task: DownloadPipelineArtifact@2
+              displayName: 'Download Terraform State'
+              inputs:
+                artifactName: 'terraform-state'
+                downloadPath: $(TF_WORKING_DIR)
+
+            - task: TerraformTaskV4@4
+              displayName: 'Apply Terraform Plan'
+              inputs:
+                provider: 'azurerm'
+                command: 'apply'
+                backendServiceArm: $(AZURE_SERVICE_CONNECTION)
+                commandOptions: '--auto-approve'
+                environmentServiceNameAzureRM: $(AZURE_SERVICE_CONNECTION)
+                workingDirectory: $(TF_WORKING_DIR)
