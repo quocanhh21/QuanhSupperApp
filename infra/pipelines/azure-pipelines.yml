@@ -2,11 +2,11 @@ trigger:
   - develop  # Runs when code is pushed to the develop branch
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'ubuntu-latest'  # Microsoft-hosted agent
 
 variables:
   AZURE_SERVICE_CONNECTION: 'AzureTerraformService'  # Azure DevOps Service Connection
-  TF_WORKING_DIR: 'infra/terraform'  # Path to Terraform files
+  TF_WORKING_DIR: 'terraform'  # Adjusted based on your file structure
 
 stages:
   - stage: Terraform
@@ -17,33 +17,33 @@ stages:
         steps:
           - checkout: self
 
-          # Install Terraform
-          - task: TerraformInstaller@0
+          # Install Terraform (since ubuntu-latest might not have it)
+          - task: TerraformToolInstaller@1
             displayName: 'Install Terraform'
             inputs:
-              terraformVersion: '1.7.5'  # Update this to your required Terraform version
+              terraformVersion: '1.7.5'
 
-          # Format Check
+          # Validate Terraform Formatting
           - script: |
               terraform fmt -check
             workingDirectory: $(TF_WORKING_DIR)
             displayName: 'Check Terraform Formatting'
 
-          # Initialize Terraform
+          # Terraform Init (Using backend.tf instead of backend-config.tfvars)
           - script: |
-              terraform init -backend-config="backend-config.tfvars" -input=false
+              terraform init -input=false
               terraform validate
             workingDirectory: $(TF_WORKING_DIR)
             displayName: 'Terraform Init & Validate'
 
-          # Terraform Plan
+          # Terraform Plan (With Error Handling)
           - script: |
-              terraform plan -out=tfplan
+              terraform plan -out=tfplan || exit 1
             workingDirectory: $(TF_WORKING_DIR)
             displayName: 'Terraform Plan'
 
-          # Terraform Apply
+          # Terraform Apply (With Confirmation)
           - script: |
-              terraform apply -auto-approve tfplan
+              terraform apply -auto-approve tfplan || exit 1
             workingDirectory: $(TF_WORKING_DIR)
             displayName: 'Terraform Apply'
