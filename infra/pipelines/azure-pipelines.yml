@@ -79,7 +79,7 @@ jobs:
 
   - deployment: TerraformApply
     displayName: 'Terraform Apply'
-    #environment: production  # Change based on your environment
+    environment: stage  # Change based on your environment
     #dependsOn: waitForValidation
     strategy:
       runOnce:
