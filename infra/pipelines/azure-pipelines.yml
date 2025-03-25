@@ -25,6 +25,15 @@ stages:
             inputs:
               terraformVersion: '1.7.5'
 
+          - task: AzureCLI@2
+            displayName: 'Azure Login'
+            inputs:
+              azureSubscription: $(AZURE_SERVICE_CONNECTION)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az account show  # Verify login
+
           - script: |
               terraform init \
                 -backend-config="storage_account_name=$(storageAccountName)" \
