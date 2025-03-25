@@ -29,7 +29,7 @@ stages:
             displayName: 'Manually Install Terraform (if missing)'
 
           # Install Terraform (Preferred)
-          - task: TerraformToolInstaller@1
+          - task: TerraformTaskV1@1
             displayName: 'Install Terraform'
             inputs:
               terraformVersion: '1.7.5'  # Update this to your required Terraform version
