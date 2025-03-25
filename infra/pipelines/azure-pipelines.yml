@@ -1,56 +1,34 @@
 trigger:
-  - develop  # Runs when code is pushed to the develop branch
+  - develop  # Runs when code is pushed to develop branch
 
 pool:
   vmImage: 'ubuntu-22.04'
 
 variables:
-- group: Terraform_Variables  # Import variables from the Azure DevOps library
+- group: Terraform_Variables  # Load predefined variables from Azure DevOps Library
 - name: AZURE_SERVICE_CONNECTION
-  value: 'AzureTerraformService'  # Azure DevOps Service Connection
+  value: 'AzureTerraformService'
 - name: TF_WORKING_DIR
-  value: 'infra/terraform'  # Path to Terraform files
+  value: 'infra/terraform'
+- name: RESOURCE_GROUP_NAME
+  value: 'TerraformStateRG'
 
-stages:
-  - stage: Terraform
-    displayName: 'Terraform Deployment'
-    jobs:
-      - job: Terraform_Apply
-        displayName: 'Terraform Init & Apply'
-        steps:
-          - checkout: self
+jobs:
+  - job: TerraformInit
+    displayName: 'Initialize Terraform'
+    steps:
+      - task: TerraformInstaller@0
+        inputs:
+          terraformVersion: '1.7.5'  # Use your preferred Terraform version
 
-          - task: TerraformInstaller@0
-            displayName: 'Install Terraform'
-            inputs:
-              terraformVersion: '1.7.5'
-
-          - task: AzureCLI@2
-            displayName: 'Azure Login'
-            inputs:
-              azureSubscription: $(AZURE_SERVICE_CONNECTION)
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                az account show  # Verify login
-
-          - script: |
-              terraform init \
-                -backend-config="storage_account_name=$(storageAccountName)" \
-                -backend-config="container_name=$(containerName)" \
-                -backend-config="key=$(key)" \
-                -backend-config="access_key=$(accessKey)"
-              terraform validate
-              terraform plan -out=tfplan
-            workingDirectory: $(TF_WORKING_DIR)
-            displayName: 'Terraform Init & Validate & Plan with Backend Config'
-
-          - script: |
-              terraform init \
-                -backend-config="storage_account_name=$(storageAccountName)" \
-                -backend-config="container_name=$(containerName)" \
-                -backend-config="key=$(key)" \
-                -backend-config="access_key=$(accessKey)"
-              terraform apply -auto-approve tfplan
-            workingDirectory: $(TF_WORKING_DIR)
-            displayName: 'Terraform Init & Apply'
+      - task: TerraformTaskV4@4
+        displayName: 'Terraform Init'
+        inputs:
+          provider: 'azurerm'
+          backendServiceArm: $(AZURE_SERVICE_CONNECTION)
+          backendAzureRmResourceGroupName: $(RESOURCE_GROUP_NAME)
+          backendAzureRmStorageAccountName: $(storageAccountName)
+          backendAzureRmContainerName: $(containerName)
+          backendAzureRmKey: $(accessKey)
+          command: 'init'
+          workingDirectory: $(TF_WORKING_DIR)
