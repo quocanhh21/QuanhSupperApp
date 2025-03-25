@@ -1,0 +1,15 @@
+├── infra/                    # Infrastructure as Code (Terraform, Ansible, CI/CD)
+│   ├── terraform/            # Terraform scripts for provisioning Azure resources
+│   │   ├── main.tf           # Main Terraform configuration
+│   │   ├── variables.tf      # Terraform variables
+│   │   ├── outputs.tf        # Terraform outputs
+│   │   ├── providers.tf      # Define cloud provider (Azure)
+│   │   ├── backend.tf        # Terraform backend (Azure Storage for state)
+│   │   ├── modules/          # Reusable Terraform modules
+│   ├── ansible/              # Ansible playbooks for configuring servers
+│   │   ├── playbook.yml      # Main Ansible playbook
+│   │   ├── roles/            # Ansible roles (database, API, etc.)
+│   │   ├── inventory         # Inventory file defining target servers
+│   ├── scripts/              # Bash scripts for automation (optional)
+│   ├── pipelines/            # CI/CD pipeline configs (Azure DevOps YAML)
+│   │   ├── azure-pipelines.yml
