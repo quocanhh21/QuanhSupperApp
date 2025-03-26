@@ -40,6 +40,23 @@ jobs:
          provider: 'azurerm'
          command: 'validate'
          workingDirectory: $(TF_WORKING_DIR)
+      
+      - task: TerraformTaskV4@4
+        displayName: 'Terraform Plan'
+        inputs:
+         provider: 'azurerm'
+         command: 'plan'
+         environmentServiceNameAzureRM: $(AZURE_SERVICE_CONNECTION)
+         workingDirectory: $(TF_WORKING_DIR)
+
+      - task: TerraformTaskV4@4
+        displayName: 'Apply Terraform Plan'
+        inputs:
+          provider: 'azurerm'
+          command: 'apply'
+          commandOptions: '--auto-approve'
+          environmentServiceNameAzureRM: $(AZURE_SERVICE_CONNECTION)
+          workingDirectory: $(TF_WORKING_DIR)
 
       - task: PublishPipelineArtifact@1
         displayName: 'Publish Terraform State'
@@ -47,23 +64,23 @@ jobs:
           targetPath: $(TF_WORKING_DIR)
           artifactName: 'terraform-state'
   
-  - job: TerraformPlan
-    displayName: 'Terraform Plan'
-    dependsOn: TerraformInit
-    steps:
-      - task: DownloadPipelineArtifact@2
-        displayName: 'Download Terraform State'
-        inputs:
-          artifactName: 'terraform-state'
-          downloadPath: $(TF_WORKING_DIR)
+  # - job: TerraformPlan
+  #   displayName: 'Terraform Plan'
+  #   dependsOn: TerraformInit
+  #   steps:
+  #     - task: DownloadPipelineArtifact@2
+  #       displayName: 'Download Terraform State'
+  #       inputs:
+  #         artifactName: 'terraform-state'
+  #         downloadPath: $(TF_WORKING_DIR)
 
-      - task: TerraformTaskV4@4
-        displayName: 'Terraform Plan'
-        inputs:
-          provider: 'azurerm'
-          command: 'plan'
-          environmentServiceNameAzureRM: $(AZURE_SERVICE_CONNECTION)
-          workingDirectory: $(TF_WORKING_DIR)
+  #     - task: TerraformTaskV4@4
+  #       displayName: 'Terraform Plan'
+  #       inputs:
+  #         provider: 'azurerm'
+  #         command: 'plan'
+  #         environmentServiceNameAzureRM: $(AZURE_SERVICE_CONNECTION)
+  #         workingDirectory: $(TF_WORKING_DIR)
   
   # - job: waitForValidation
   #   displayName: 'Wait for External Validation'
@@ -78,26 +95,26 @@ jobs:
   #         instructions: 'Please validate the Terraform Plan before applying'
   #         onTimeout: 'resume'
 
-  - deployment: TerraformApply
-    displayName: 'Terraform Apply'
-    environment: stage  # Change based on your environment
-    dependsOn: TerraformPlan
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-            - task: DownloadPipelineArtifact@2
-              displayName: 'Download Terraform State'
-              inputs:
-                artifactName: 'terraform-state'
-                downloadPath: $(TF_WORKING_DIR)
+  # - deployment: TerraformApply
+  #   displayName: 'Terraform Apply'
+  #   environment: stage  # Change based on your environment
+  #   dependsOn: TerraformPlan
+  #   strategy:
+  #     runOnce:
+  #       deploy:
+  #         steps:
+  #           - task: DownloadPipelineArtifact@2
+  #             displayName: 'Download Terraform State'
+  #             inputs:
+  #               artifactName: 'terraform-state'
+  #               downloadPath: $(TF_WORKING_DIR)
 
-            - task: TerraformTaskV4@4
-              displayName: 'Apply Terraform Plan'
-              inputs:
-                provider: 'azurerm'
-                command: 'apply'
-                backendServiceArm: $(AZURE_SERVICE_CONNECTION)
-                commandOptions: '--auto-approve'
-                environmentServiceNameAzureRM: $(AZURE_SERVICE_CONNECTION)
-                workingDirectory: $(TF_WORKING_DIR)
+  #           - task: TerraformTaskV4@4
+  #             displayName: 'Apply Terraform Plan'
+  #             inputs:
+  #               provider: 'azurerm'
+  #               command: 'apply'
+  #               backendServiceArm: $(AZURE_SERVICE_CONNECTION)
+  #               commandOptions: '--auto-approve'
+  #               environmentServiceNameAzureRM: $(AZURE_SERVICE_CONNECTION)
+  #               workingDirectory: $(TF_WORKING_DIR)
