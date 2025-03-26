@@ -29,7 +29,7 @@ jobs:
           backendAzureRmResourceGroupName: $(RESOURCE_GROUP_NAME)
           backendAzureRmStorageAccountName: $(storageAccountName)
           backendAzureRmContainerName: $(containerName)
-          backendAzureRmKey: $(accessKey)
+          backendAzureRmKey: 'quanhsupperapp.terraform.tfstate'
           command: 'init'
           commandOptions: '-reconfigure'
           workingDirectory: $(TF_WORKING_DIR)
